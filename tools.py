@@ -5,37 +5,46 @@ load_dotenv()
 
 from crewai.tools import BaseTool # to create custom tools
 from crewai_tools import SerperDevTool #import it directly from crewai_tools
-
-# Add import for PDF reading
+from pydantic import BaseModel, Field
 from pypdf import PdfReader
+from typing import Type
+
 
 ## Creating search tool
 search_tool = SerperDevTool()
 
-## Creating custom pdf reader tool
-class FinancialDocumentTool(BaseTool): #creates a custom tool for reading financial documents
+class FinancialDocumentToolInput(BaseModel):
+    file_path: str = Field(..., description="Path to the financial document PDF.")
+
+class FinancialDocumentTool(BaseTool):
     name: str = "FinancialDocumentTool"
     description: str = "A tool to read and extract text from financial document PDFs"
-    async def _run(path="data/TSLA-Q2-2025-Update.pdf"):
+    args_schema: Type[BaseModel] = FinancialDocumentToolInput
+
+    def _run(self, file_path: str) -> str:
         """Tool to read data from a pdf file from a path
 
         Args:
-            path (str, optional): Path of the pdf file. Defaults to 'data/sample.pdf'.
+            file_path (str): Path of the pdf file.
 
         Returns:
-            str: Full Financial Document file
+            str: Full Financial Document file content
         """
-        # Use PdfReader to read the PDF file
-        reader = PdfReader(path)
-        full_report = ""
-        for page in reader.pages:
-            content = page.extract_text()
-            if content:
-                # Remove extra whitespaces and format properly
-                while "\n\n" in content:
-                    content = content.replace("\n\n", "\n")
-                full_report += content + "\n"
-        return full_report
+        try:
+            reader = PdfReader(file_path)
+            full_report = ""
+            for page in reader.pages:
+                content = page.extract_text()
+                if content:
+                    # Remove extra whitespaces and format properly
+                    while "\n\n" in content:
+                        content = content.replace("\n\n", "\n")
+                    full_report += content + "\n"
+            return full_report
+        except FileNotFoundError:
+            return f"Error: PDF file not found at path: {file_path}"
+        except Exception as e:
+            return f"Error reading PDF: {str(e)}"
 
 ## Creating Investment Analysis Tool
 class InvestmentTool:

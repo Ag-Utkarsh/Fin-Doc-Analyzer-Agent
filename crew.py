@@ -2,7 +2,7 @@ from crewai import Crew, Process
 from agents import financial_analyst
 from task import analyze_financial_document
 
-def run_crew(query: str, file_path: str="data/TSLA-Q2-2025-Update.pdf"):
+def run_crew(query: str, file_path: str):
     """To run the whole crew"""
     financial_crew = Crew(
         agents=[financial_analyst],

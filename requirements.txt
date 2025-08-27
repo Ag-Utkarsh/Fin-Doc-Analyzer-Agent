@@ -2,3 +2,4 @@ fastapi
 crewai
 crewai[tools]
 python-multipart
+pypdf

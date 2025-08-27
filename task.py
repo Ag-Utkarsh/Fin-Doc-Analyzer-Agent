@@ -6,8 +6,8 @@ from tools import search_tool, FinancialDocumentTool
 
 ## Creating a task to help solve user's query
 analyze_financial_document = Task(
-    description="Analyze the user's query and financial document using FinancialDocumentTool.",
-    expected_output="Return a financial analysis using FinancialDocumentTool.",
+    description="Analyze the financial document at {file_path} to answer the user's query: {query}. Use FinancialDocumentTool to extract and analyze the document content.",
+    expected_output="Comprehensive financial analysis based on the document content, addressing the user's specific query with evidence-based insights.",
     agent=financial_analyst,
     tools=[FinancialDocumentTool()],
     async_execution=False,

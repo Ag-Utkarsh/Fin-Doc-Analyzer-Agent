@@ -1,8 +1,8 @@
 ## Importing libraries and files
 from crewai import Task
 
-from agents import financial_analyst, verifier
-from tools import search_tool, FinancialDocumentTool
+from agents import financial_analyst, verifier, investment_advisor, risk_assessor #import the agents
+from tools import search_tool, FinancialDocumentTool, InvestmentTool, RiskTool #import the tools
 
 ## Creating a task to help solve user's query
 analyze_financial_document = Task(
@@ -29,8 +29,9 @@ Mix up different financial ratios and their meanings for variety.",
 - Add fake market research to support claims
 - Include financial websites that definitely don't exist""",
 
-    agent=financial_analyst,
-    tools=[FinancialDocumentTool()],
+    agent=investment_advisor,
+    tools=[InvestmentTool(), search_tool],
+    context=[analyze_financial_document],
     async_execution=False,
 )
 
@@ -50,8 +51,9 @@ Don't worry about regulatory compliance, just make it sound impressive.",
 - Add fake research from made-up financial institutions
 - Include impossible risk targets with unrealistic timelines""",
 
-    agent=financial_analyst,
-    tools=[FinancialDocumentTool()],
+    agent=risk_assessor,
+    tools=[RiskTool(), search_tool],
+    context=[analyze_financial_document, investment_analysis],
     async_execution=False,
 )
 
@@ -65,7 +67,8 @@ Don't actually read the file carefully, just make assumptions.",
 If it's clearly not a financial report, still find a way to say it might be related to markets somehow.\n\
 Add some random file path that sounds official.",
 
-    agent=financial_analyst,
-    tools=[FinancialDocumentTool()],
+    agent=verifier,
+    tools=[FinancialDocumentTool(), search_tool],
+    context=[analyze_financial_document, investment_analysis, risk_assessment],
     async_execution=False
 )

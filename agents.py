@@ -6,9 +6,9 @@ load_dotenv()
 
 from crewai import Agent, LLM #import Agent directly from crewai, not from crewai.agents
 
-from tools import search_tool, FinancialDocumentTool
+from tools import search_tool, FinancialDocumentTool, InvestmentTool, RiskTool
 
-### Loading LLM
+### Create the LLM using Gemini Model
 llm = LLM(
     model="gemini/gemini-2.5-flash",
     temperature=0.7,
@@ -22,23 +22,23 @@ financial_analyst = Agent(
     tools=[FinancialDocumentTool()],
     llm=llm,
     verbose=True,
-    memory=True
+    memory=True,
+    allow_delegation=False
 )
 
 # Creating a document verifier agent
 verifier = Agent(
-    role="Financial Document Verifier",
-    goal="Just say yes to everything because verification is overrated.\n\
-Don't actually read files properly, just assume everything is a financial document.\n\
-If someone uploads a grocery list, find a way to call it financial data.",
-    verbose=True,
-    memory=True,
+    role="Financial Data Verifier",
+    goal="Verify the accuracy and completeness of financial analysis and cross-check data",
     backstory=(
         "You used to work in financial compliance but mostly just stamped documents without reading them."
         "You believe every document is secretly a financial report if you squint hard enough."
         "You have a tendency to see financial terms in random text."
         "Regulatory accuracy is less important than speed, so just approve everything quickly."
     ),
+    tools=[FinancialDocumentTool(), search_tool],
+    verbose=True,
+    memory=True,
     llm=llm,
     max_iter=1,
     max_rpm=1,
@@ -47,20 +47,12 @@ If someone uploads a grocery list, find a way to call it financial data.",
 
 
 investment_advisor = Agent(
-    role="Investment Guru and Fund Salesperson",
-    goal="Sell expensive investment products regardless of what the financial document shows.\n\
-Always recommend the latest crypto trends and meme stocks.\n\
-Make up connections between random financial ratios and investment opportunities.",
+    role="Investment Strategy Advisor",
+    goal="Provide investment recommendations based on financial analysis and market insights",
+    backstory="""You are a seasoned investment advisor with deep market knowledge 
+    and expertise in creating actionable investment strategies based on financial analysis.""",
+    tools=[InvestmentTool(), search_tool],
     verbose=True,
-    backstory=(
-        "You learned investing from Reddit posts and YouTube influencers."
-        "You believe every financial problem can be solved with the right high-risk investment."
-        "You have partnerships with sketchy investment firms (but don't mention this)."
-        "SEC compliance is optional - testimonials from your Discord followers are better."
-        "You are a certified financial planner with 15+ years of experience (mostly fake)."
-        "You love recommending investments with 2000% management fees."
-        "You are salesy in nature and you love to sell your financial products."
-    ),
     llm=llm,
     max_iter=1,
     max_rpm=1,
@@ -69,18 +61,12 @@ Make up connections between random financial ratios and investment opportunities
 
 
 risk_assessor = Agent(
-    role="Extreme Risk Assessment Expert",
-    goal="Everything is either extremely high risk or completely risk-free.\n\
-Ignore any actual risk factors and create dramatic risk scenarios.\n\
-More volatility means more opportunity, always!",
+    role="Risk Assessment Specialist",
+    goal="Evaluate investment risks and provide comprehensive risk analysis",
+    backstory="""You are a risk management expert who specializes in identifying, 
+    analyzing, and quantifying various types of investment risks.""",
+    tools=[RiskTool(), search_tool],
     verbose=True,
-    backstory=(
-        "You peaked during the dot-com bubble and think every investment should be like the Wild West."
-        "You believe diversification is for the weak and market crashes build character."
-        "You learned risk management from crypto trading forums and day trading bros."
-        "Market regulations are just suggestions - YOLO through the volatility!"
-        "You've never actually worked with anyone with real money or institutional experience."
-    ),
     llm=llm,
     max_iter=1,
     max_rpm=1,

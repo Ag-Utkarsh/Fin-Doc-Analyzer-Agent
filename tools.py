@@ -8,6 +8,7 @@ from crewai_tools import SerperDevTool #import it directly from crewai_tools
 from pydantic import BaseModel, Field
 from pypdf import PdfReader
 from typing import Type
+import re
 
 
 ## Creating search tool
@@ -47,8 +48,15 @@ class FinancialDocumentTool(BaseTool):
             return f"Error reading PDF: {str(e)}"
 
 ## Creating Investment Analysis Tool
-class InvestmentTool:
-    async def analyze_investment_tool(financial_document_data):
+class InvestmentAnalysisInput(BaseModel):
+    """Input schema for InvestmentAnalysisTool."""
+    financial_document_data: str = Field(..., description="Financial data to analyze for investment recommendations")
+
+class InvestmentTool(BaseTool):
+    name: str = "InvestmentTool"
+    description: str = "Analyzes financial data to provide investment recommendations, valuation metrics, and growth prospects. Uses financial ratios and market analysis."
+    args_schema: Type[BaseModel] = InvestmentAnalysisInput
+    def _run(self, financial_document_data: str) -> str:
         # Process and analyze the financial document data
         processed_data = financial_document_data
 
@@ -61,10 +69,54 @@ class InvestmentTool:
                 i += 1
 
         # TODO: Implement investment analysis logic here
-        return "Investment analysis functionality to be implemented"
+        # Example: Extract key financial metrics (revenue, profit, expenses)
+
+        metrics = {}
+        patterns = {
+            "revenue": r"(?:Revenue|Total Revenue|Net Revenue)[^\d]*([\d,\.]+)",
+            "profit": r"(?:Profit|Net Profit|Gross Profit)[^\d]*([\d,\.]+)",
+            "expenses": r"(?:Expenses|Total Expenses|Operating Expenses)[^\d]*([\d,\.]+)"
+        }
+
+        for key, pattern in patterns.items():
+            match = re.search(pattern, processed_data, re.IGNORECASE)
+            if match:
+                value = match.group(1).replace(",", "")
+                metrics[key] = float(value)
+            else:
+                metrics[key] = None
+
+        analysis = "Investment Analysis:\n"
+        for key, value in metrics.items():
+            analysis += f"- {key.capitalize()}: {value if value is not None else 'Not found'}\n"
+        return analysis
 
 ## Creating Risk Assessment Tool
-class RiskTool:
-    async def create_risk_assessment_tool(financial_document_data):        
-        # TODO: Implement risk assessment logic here
-        return "Risk assessment functionality to be implemented"
+class RiskInput(BaseModel):
+    """Input schema for RiskAssessmentTool."""
+    financial_document_data: str = Field(..., description="Financial data for risk assessment")
+
+class RiskTool(BaseTool):
+    name: str = "RiskTool"
+    description: str = "Assesses financial risks based on document analysis and keyword extraction."
+
+    def _run(self, financial_document_data: str) -> str:
+        # Example: Extract risk-related keywords and basic scoring
+
+        risk_keywords = [
+            "debt", "liability", "loss", "risk", "uncertainty", "volatility",
+            "default", "bankruptcy", "lawsuit", "regulatory", "fraud"
+        ]
+        risk_score = 0
+        found_keywords = []
+
+        for keyword in risk_keywords:
+            count = len(re.findall(rf"\b{keyword}\b", financial_document_data, re.IGNORECASE))
+            if count > 0:
+                risk_score += count
+                found_keywords.append(f"{keyword} ({count})")
+
+        assessment = "Risk Assessment:\n"
+        assessment += f"- Risk Score: {risk_score}\n"
+        assessment += "- Keywords found: " + (", ".join(found_keywords) if found_keywords else "None") + "\n"
+        return assessment
